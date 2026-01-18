@@ -1,0 +1,174 @@
+--// SERVICES
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+
+local player = Players.LocalPlayer
+local character, hrp, hum
+
+local function setupCharacter(char)
+    character = char
+    hrp = character:WaitForChild("HumanoidRootPart")
+    hum = character:WaitForChild("Humanoid")
+end
+
+if player.Character then
+    setupCharacter(player.Character)
+end
+player.CharacterAdded:Connect(setupCharacter)
+
+--// UI CREATE FUNC
+local function create(class, props)
+    local obj = Instance.new(class)
+    for k, v in pairs(props) do
+        if k ~= "Parent" then
+            obj[k] = v
+        end
+    end
+    if props.Parent then obj.Parent = props.Parent end
+    return obj
+end
+
+--// GUI
+local ScreenGui = create("ScreenGui", {
+    Name = "ADGAF_SPEED",
+    ResetOnSpawn = false,
+    Parent = player:WaitForChild("PlayerGui")
+})
+
+local MainFrame = create("Frame", {
+    Size = UDim2.new(0, 340, 0, 160),
+    Position = UDim2.new(0.5, -170, 0.08, 0),
+    BackgroundTransparency = 1,
+    Active = true,
+    Draggable = true,
+    Parent = ScreenGui
+})
+
+local Background = create("Frame", {
+    Size = UDim2.new(1, 0, 1, 0),
+    BackgroundColor3 = Color3.fromRGB(12,12,16),
+    BackgroundTransparency = 0.1,
+    BorderSizePixel = 0,
+    Parent = MainFrame
+})
+
+create("UICorner", {CornerRadius = UDim.new(0.15,0), Parent = Background})
+
+--// TITLE
+create("TextLabel", {
+    Size = UDim2.new(1,0,0,30),
+    Position = UDim2.new(0,0,0,5),
+    BackgroundTransparency = 1,
+    Text = "🔥 MADE BY ADGAF 🔥",
+    TextColor3 = Color3.fromRGB(255,255,255),
+    TextSize = 18,
+    Font = Enum.Font.LuckiestGuy,
+    Parent = MainFrame
+})
+
+--// INPUTS
+local SpeedNoStealInput = create("TextBox", {
+    Size = UDim2.new(0.3,0,0,32),
+    Position = UDim2.new(0.02,0,0,42),
+    BackgroundColor3 = Color3.fromRGB(35,20,15),
+    Text = "50",
+    TextColor3 = Color3.new(1,1,1),
+    Font = Enum.Font.LuckiestGuy,
+    BorderSizePixel = 0,
+    Parent = MainFrame
+})
+
+local SpeedStealInput = create("TextBox", {
+    Size = UDim2.new(0.3,0,0,32),
+    Position = UDim2.new(0.34,0,0,42),
+    BackgroundColor3 = Color3.fromRGB(40,35,10),
+    Text = "28",
+    TextColor3 = Color3.new(1,1,1),
+    Font = Enum.Font.LuckiestGuy,
+    BorderSizePixel = 0,
+    Parent = MainFrame
+})
+
+local JumpInput = create("TextBox", {
+    Size = UDim2.new(0.3,0,0,32),
+    Position = UDim2.new(0.66,0,0,42),
+    BackgroundColor3 = Color3.fromRGB(10,25,40),
+    Text = "50",
+    TextColor3 = Color3.new(1,1,1),
+    Font = Enum.Font.LuckiestGuy,
+    BorderSizePixel = 0,
+    Parent = MainFrame
+})
+
+--// BUTTONS
+local SpeedButton = create("TextButton", {
+    Size = UDim2.new(0.47,0,0,36),
+    Position = UDim2.new(0.02,0,0,95),
+    BackgroundColor3 = Color3.fromRGB(180,0,0),
+    Text = "SPEED",
+    TextColor3 = Color3.new(1,1,1),
+    Font = Enum.Font.LuckiestGuy,
+    BorderSizePixel = 0,
+    Parent = MainFrame
+})
+
+local JumpButton = create("TextButton", {
+    Size = UDim2.new(0.47,0,0,36),
+    Position = UDim2.new(0.51,0,0,95),
+    BackgroundColor3 = Color3.fromRGB(0,100,180),
+    Text = "JUMP",
+    TextColor3 = Color3.new(1,1,1),
+    Font = Enum.Font.LuckiestGuy,
+    BorderSizePixel = 0,
+    Parent = MainFrame
+})
+
+--// VALUES
+local speedActive = false
+local speedConnection
+local speedNoStealValue = 50
+local speedStealValue = 28
+local jumpValue = 50
+local jumpActive = false
+
+--// SPEED LOGIC
+SpeedButton.MouseButton1Click:Connect(function()
+    speedActive = not speedActive
+    SpeedButton.Text = speedActive and "OFF" or "SPEED"
+
+    if speedActive then
+        speedConnection = RunService.Heartbeat:Connect(function()
+            if hum and hrp then
+                local dir = hum.MoveDirection
+                if dir.Magnitude > 0 then
+                    local isSteal = hum.WalkSpeed < 25
+                    local spd = isSteal and speedStealValue or speedNoStealValue
+                    hrp.AssemblyLinearVelocity = Vector3.new(
+                        dir.X * spd,
+                        hrp.AssemblyLinearVelocity.Y,
+                        dir.Z * spd
+                    )
+                end
+            end
+        end)
+    else
+        if speedConnection then speedConnection:Disconnect() end
+    end
+end)
+
+--// JUMP
+JumpButton.MouseButton1Click:Connect(function()
+    jumpActive = not jumpActive
+    JumpButton.Text = jumpActive and "ON" or "JUMP"
+end)
+
+UserInputService.JumpRequest:Connect(function()
+    if jumpActive and hrp then
+        hrp.AssemblyLinearVelocity = Vector3.new(
+            hrp.AssemblyLinearVelocity.X,
+            jumpValue,
+            hrp.AssemblyLinearVelocity.Z
+        )
+    end
+end)
